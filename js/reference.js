@@ -30,6 +30,8 @@
   const sourceCanvas = document.createElement('canvas'); // raw imported image, downscaled
   const processedCanvas = document.createElement('canvas'); // after Section 15 filters
   const processedCtx = processedCanvas.getContext('2d');
+  const outlineCanvas = document.createElement('canvas'); // built once per image, for guideMode 'outline'
+  const outlineCtx = outlineCanvas.getContext('2d');
 
   const state = {
     hasImage: false,
@@ -70,6 +72,7 @@
         state.aspect = sourceCanvas.width / sourceCanvas.height;
         state.placement = { cx: 0.5, cy: 0.5, w: 0.8, rotation: 0 };
         applyProcessing();
+        buildOutlineCanvas();
         URL.revokeObjectURL(img.src);
         emit('loaded');
         resolve();
@@ -152,6 +155,40 @@
       d[i] = d[i + 1] = d[i + 2] = v;
     }
     processedCtx.putImageData(imgData, 0, 0);
+  }
+
+  /** Independent edge-line rendering for guideMode 'outline' \u2014 built once
+   *  from the ORIGINAL image, so it doesn't depend on whatever the user has
+   *  toggled in the manual processing controls. */
+  function buildOutlineCanvas() {
+    const w = sourceCanvas.width, h = sourceCanvas.height;
+    outlineCanvas.width = w;
+    outlineCanvas.height = h;
+    const src = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
+    const out = outlineCtx.createImageData(w, h);
+    const d = src.data, o = out.data;
+    const gray = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) {
+      gray[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    }
+    const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+    const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        let sx = 0, sy = 0, k = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const v = gray[(y + ky) * w + (x + kx)];
+            sx += v * gx[k]; sy += v * gy[k]; k++;
+          }
+        }
+        const mag = Math.min(255, Math.sqrt(sx * sx + sy * sy));
+        const idx = (y * w + x) * 4;
+        o[idx] = o[idx + 1] = o[idx + 2] = 0;
+        o[idx + 3] = mag > 40 ? Math.min(255, mag * 1.5) : 0; // transparent except on edges
+      }
+    }
+    outlineCtx.putImageData(out, 0, 0);
   }
 
   function setProcessing(partial) {
@@ -290,7 +327,8 @@
     const dpr = window.PencilCamera.dpr;
     bakeCtx.save();
     bakeCtx.globalAlpha = effectiveOpacity();
-    window.ImageWarp.warpImage(bakeCtx, processedCanvas, (u, v) => {
+    const source = state.guideMode === 'outline' ? outlineCanvas : processedCanvas;
+    window.ImageWarp.warpImage(bakeCtx, source, (u, v) => {
       const paperPt = uvToPaperNormalized(u, v);
       const disp = window.Calibration.normalizedToCamera(paperPt.x, paperPt.y);
       return { x: disp.x * dpr, y: disp.y * dpr };
@@ -302,7 +340,8 @@
   function effectiveOpacity() {
     const base = state.processing.opacity;
     if (state.guideMode === 'ghost') return Math.min(base, 0.18);
-    if (state.guideMode === 'outline') return base; // edge-detect already does the visual work
+    if (state.guideMode === 'path') return Math.min(base, 0.12); // tracing.js draws the explicit path on top
+    if (state.guideMode === 'outline') return Math.max(base, 0.85); // alpha channel already encodes edges
     return base;
   }
 
@@ -327,9 +366,21 @@
     unlock,
     on,
     setGuideMode(mode) { state.guideMode = mode; invalidateBake(); },
+    paperNormalizedToUV(x, y) {
+      const { cx, cy, w, rotation } = state.placement;
+      const h = w / state.aspect;
+      const dx = x - cx, dy = y - cy;
+      const cos = Math.cos(-rotation), sin = Math.sin(-rotation);
+      const lx = dx * cos - dy * sin;
+      const ly = dx * sin + dy * cos;
+      return { u: lx / w + 0.5, v: ly / h + 0.5 };
+    },
+    uvToPaperNormalized,
+    getSourceCanvas() { return sourceCanvas; },
     get hasImage() { return state.hasImage; },
     get locked() { return state.locked; },
     get processing() { return { ...state.processing }; },
     get placement() { return { ...state.placement }; },
+    get aspect() { return state.aspect; },
   };
 })();

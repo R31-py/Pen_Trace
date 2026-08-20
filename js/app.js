@@ -59,6 +59,7 @@
       window.PencilCamera.onFrame(() => {
         if (App.debug) fpsBadge.textContent = window.PencilCamera.fps + ' fps';
       });
+      cameraVisibilityBtn.classList.remove('hidden');
 
       console.log('[Pencil Tracer] camera live:', settings);
       App.emit('camera-ready', settings);
@@ -189,6 +190,19 @@
   }
 
   const recalibrateBtn = document.getElementById('recalibrate-btn');
+  const cameraVisibilityBtn = document.getElementById('camera-visibility-btn');
+
+  const CAMERA_VISIBILITY_STATES = ['faint', 'full', 'hidden'];
+  let cameraVisibilityIndex = 0;
+  cameraVisibilityBtn.addEventListener('click', () => {
+    cameraVisibilityIndex = (cameraVisibilityIndex + 1) % CAMERA_VISIBILITY_STATES.length;
+    const mode = CAMERA_VISIBILITY_STATES[cameraVisibilityIndex];
+    const video = document.getElementById('camera-video');
+    video.classList.remove('cam-full', 'cam-hidden');
+    if (mode === 'full') video.classList.add('cam-full');
+    if (mode === 'hidden') video.classList.add('cam-hidden');
+    cameraVisibilityBtn.textContent = mode === 'faint' ? '\ud83d\udc41\ufe0f' : mode === 'full' ? '\ud83d\udcf7' : '\ud83d\udeab';
+  });
 
   window.Calibration && window.Calibration.on('complete', ({ points, homography }) => {
     App.phase = 'calibrated';
@@ -316,6 +330,61 @@
   });
   thresholdSlider.addEventListener('input', (e) => {
     if (thresholdToggle.checked) window.Reference.setProcessing({ threshold: Number(e.target.value) });
+  });
+
+  // ---- tracing (Phase 10) ----
+  const guideModeSelect = document.getElementById('guide-mode-select');
+  const startTracingBtn = document.getElementById('start-tracing-btn');
+  const progressPill = document.getElementById('tracing-progress-pill');
+  const completePanel = document.getElementById('tracing-complete-panel');
+
+  guideModeSelect.addEventListener('change', () => {
+    window.Tracing.setGuideMode(guideModeSelect.value);
+  });
+
+  startTracingBtn.addEventListener('click', () => {
+    if (!window.Reference.hasImage) {
+      showHint('Import a reference image first');
+      setTimeout(hideHint, 1800);
+      return;
+    }
+    if (!window.Reference.locked) window.Reference.lock(); // tracing needs a fixed placement
+    lockBtn.textContent = '\ud83d\udd12';
+    const ok = window.Tracing.start();
+    if (!ok) {
+      showHint('Couldn\u2019t find enough detail in this image to trace');
+      setTimeout(hideHint, 2200);
+      return;
+    }
+    window.Tracing.setGuideMode(guideModeSelect.value);
+    progressPill.classList.remove('hidden');
+    referencePanel.classList.add('hidden');
+  });
+
+  window.Tracing.on('progress', (p) => {
+    progressPill.textContent = `Tracing: ${Math.round(p * 100)}%`;
+  });
+
+  window.Tracing.on('complete', () => {
+    completePanel.classList.remove('hidden');
+  });
+
+  document.getElementById('tracing-continue-btn').addEventListener('click', () => {
+    completePanel.classList.add('hidden');
+  });
+  document.getElementById('tracing-restart-btn').addEventListener('click', () => {
+    window.Tracing.restart();
+    completePanel.classList.add('hidden');
+  });
+
+  // ---- touch-to-lift: tapping the drawing area ends the current stroke ----
+  // (the camera can't distinguish "touching paper" from "hovering above
+  // it" on its own \u2014 see forceLift()'s comment in tracking.js)
+  document.querySelector('.workspace').addEventListener('pointerdown', (e) => {
+    // don't treat reference-image positioning gestures (drag/pinch/rotate,
+    // only active while unlocked) as a lift tap
+    if (e.target && e.target.id === 'reference-canvas') return;
+    window.Tracking.forceLift();
   });
 
   // ---- service worker registration (fleshed out in Phase 13) ----

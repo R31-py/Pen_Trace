@@ -127,6 +127,19 @@
     state.tracking = false;
   }
 
+  /** Manual pen-lift: the camera can't tell "touching paper" from "hovering
+   *  above it" on its own, so we treat a tap on the drawing area as an
+   *  explicit lift signal. If the marker is still visible in the same
+   *  spot next frame, tracking simply reacquires and a fresh stroke
+   *  begins there \u2014 which is exactly the desired behavior when someone
+   *  taps mid-drawing to end one stroke and start the next. */
+  function forceLift() {
+    if (!state.tracking) return;
+    state.tracking = false;
+    state.confidence = 0;
+    emit('lost');
+  }
+
   window.MarkerTracker && window.MarkerTracker.on && window.MarkerTracker.on('tip', (tip) => handleTip(tip, performance.now()));
 
   // ---- overlay rendering: live cursor + optional debug grid ----
@@ -163,7 +176,13 @@
   }
 
   function drawCursor(p, confidence) {
-    const color = confidence > CONF_GOOD ? '#3fe08a' : confidence > CONF_WARN ? '#f0b429' : '#ef5350';
+    let color;
+    const tracingState = window.Tracing && window.Tracing.feedbackState;
+    if (tracingState) {
+      color = tracingState === 'on' ? '#3fe08a' : tracingState === 'near' ? '#f0b429' : '#ef5350';
+    } else {
+      color = confidence > CONF_GOOD ? '#3fe08a' : confidence > CONF_WARN ? '#f0b429' : '#ef5350';
+    }
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -183,6 +202,7 @@
   window.Tracking = {
     enable,
     disable,
+    forceLift,
     on,
     get point() { return state.normalized; },
     get isTracking() { return state.tracking; },

@@ -201,11 +201,18 @@
     disable,
     clearAll,
     on,
-    setBrush(partial) { state.brush = { ...state.brush, ...partial }; },
+    setBrush(partial) {
+      state.brush = { ...state.brush, ...partial };
+      // apply live to whatever stroke is currently being drawn, not just
+      // the next one \u2014 otherwise a mid-stroke brush/color/size change
+      // looks like it did nothing until you lift and start again
+      if (state.current) state.current.brush = { ...state.current.brush, ...partial };
+    },
     setBrushType(type) {
       const preset = window.BrushEngine.PRESETS[type];
       if (!preset) return;
       state.brush = { type, ...preset };
+      if (state.current) state.current.brush = { type, ...preset };
     },
     rebakeAll,
     get brush() { return { ...state.brush }; },

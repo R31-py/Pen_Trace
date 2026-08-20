@@ -61,7 +61,7 @@ html, body {
 .workspace {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: var(--paper-100);
 }
 
 #camera-video {
@@ -71,7 +71,11 @@ html, body {
   height: 100%;
   object-fit: cover;
   transform: scaleX(1);
+  opacity: 0.16; /* faint alignment reference \u2014 the paper itself is the star */
+  transition: opacity 0.15s ease;
 }
+#camera-video.cam-full { opacity: 1; }
+#camera-video.cam-hidden { opacity: 0; }
 
 #overlay-canvas,
 #reference-canvas,
@@ -340,6 +344,41 @@ html, body {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.control-row select {
+  flex: 1 1 auto;
+  background: var(--ink-800);
+  color: var(--paper-100);
+  border: 1px solid var(--ink-700);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.progress-pill {
+  position: absolute;
+  top: calc(64px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18,21,19,0.85);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  z-index: 20;
+  backdrop-filter: blur(6px);
+}
+.progress-pill.hidden { display: none; }
+
+#tracing-complete-panel {
+  z-index: 40;
+}
+#tracing-complete-panel .btn-secondary {
+  margin-top: 4px;
 }
 
 .toolbar {

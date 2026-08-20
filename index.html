@@ -33,6 +33,7 @@
       Pencil Tracer
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="icon-btn hidden" id="camera-visibility-btn" aria-label="Camera visibility" title="Camera visibility">\ud83d\udc41\ufe0f</button>
       <button class="icon-btn hidden" id="reference-btn" aria-label="Reference image">\uD83D\uDDBC\uFE0F</button>
       <button class="icon-btn hidden" id="recalibrate-btn" aria-label="Recalibrate">🎯</button>
       <button class="icon-btn" id="settings-btn" aria-label="Settings">⚙️</button>
@@ -77,6 +78,31 @@
       <label><input type="checkbox" id="ref-edge" /> Edge detect</label>
       <label><input type="checkbox" id="ref-threshold-toggle" /> Threshold</label>
     </div>
+
+    <!-- Phase 10: tracing -->
+    <div class="control-row" style="border-top:1px solid var(--ink-700); margin-top:8px; padding-top:10px;">
+      <span class="control-label">Guide</span>
+      <select id="guide-mode-select">
+        <option value="normal">Normal</option>
+        <option value="outline">Outline</option>
+        <option value="ghost">Ghost</option>
+        <option value="guided">Guided</option>
+        <option value="path">Path</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <button class="btn-primary" id="start-tracing-btn" style="flex:1; padding:10px;">Start tracing</button>
+    </div>
+  </div>
+
+  <div class="progress-pill hidden" id="tracing-progress-pill">Tracing: 0%</div>
+
+  <div class="center-panel hidden" id="tracing-complete-panel">
+    <div class="pencil-mark">\u2713</div>
+    <h1>Tracing complete!</h1>
+    <p>Nice work \u2014 you\u2019ve covered the whole reference.</p>
+    <button class="btn-primary" id="tracing-continue-btn">Continue drawing</button>
+    <button class="btn-secondary" id="tracing-restart-btn">Restart tracing</button>
   </div>
 
   <!-- ============ Toolbar (populated in later phases) ============ -->
@@ -141,6 +167,7 @@
 <script src="./js/brush-controls.js"></script>
 <script src="./js/image-warp.js"></script>
 <script src="./js/reference.js"></script>
+<script src="./js/tracing.js"></script>
 <script src="./js/app.js"></script>
 </body>
 </html>
