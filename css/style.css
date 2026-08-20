@@ -1,0 +1,372 @@
+/* ==========================================================================
+   Pencil Tracer — design tokens
+   A tool, not a marketing page: the camera feed is the hero. UI stays out
+   of its way, high-contrast, tactile. Semantic tracking colors (green/
+   amber/red/gray) come straight from the tracking-feedback spec — nothing
+   else competes with them for meaning.
+   ========================================================================== */
+
+:root {
+  --ink-950: #0b0d0c;
+  --ink-900: #121513;
+  --ink-800: #1b201d;
+  --ink-700: #262c28;
+  --ink-500: #5a6660;
+  --paper-100: #f3f1ea;
+  --paper-050: #faf9f5;
+
+  --accent: #d6ff3f;      /* graphite-lead yellow-green: the "live" signal */
+  --accent-dim: #8ea832;
+
+  --track-good: #3fe08a;
+  --track-warn: #f0b429;
+  --track-bad: #ef5350;
+  --track-none: #6b7570;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', ui-monospace, monospace;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+  background: var(--ink-950);
+  color: var(--paper-100);
+  font-family: var(--font-ui);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ---------- Camera / workspace stack ---------- */
+
+.workspace {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+#camera-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(1);
+}
+
+#overlay-canvas,
+#reference-canvas,
+#draw-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(12px + var(--safe-top)) 14px 12px;
+  background: linear-gradient(to bottom, rgba(11,13,12,0.85), transparent);
+  z-index: 20;
+}
+
+.topbar .title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar .title .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--track-none);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.topbar .title .dot.good { background: var(--track-good); box-shadow: 0 0 8px var(--track-good); }
+.topbar .title .dot.warn { background: var(--track-warn); box-shadow: 0 0 8px var(--track-warn); }
+.topbar .title .dot.bad  { background: var(--track-bad); }
+
+.icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(18,21,19,0.7);
+  color: var(--paper-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  backdrop-filter: blur(6px);
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active { background: rgba(38,44,40,0.9); }
+
+/* ---------- Center status / permission states ---------- */
+
+.center-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px;
+  text-align: center;
+  z-index: 30;
+  background: var(--ink-950);
+}
+
+.center-panel.hidden { display: none; }
+
+.center-panel h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.center-panel p {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 340px;
+}
+
+.pencil-mark {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.btn-primary {
+  border: none;
+  background: var(--accent);
+  color: var(--ink-950);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { background: var(--accent-dim); }
+
+.btn-secondary {
+  border: 1px solid var(--ink-700);
+  background: transparent;
+  color: var(--paper-100);
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 999px;
+}
+
+/* ---------- Brush controls (Phase 8): sliders, color picker ---------- */
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px;
+}
+
+.control-row .control-label {
+  font-size: 12px;
+  color: var(--ink-500);
+  width: 52px;
+  flex: 0 0 auto;
+}
+
+.control-row input[type="range"] {
+  flex: 1 1 auto;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ink-700);
+  outline: none;
+}
+.control-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--ink-950);
+  cursor: pointer;
+}
+.control-row input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--ink-950);
+  cursor: pointer;
+}
+
+.size-preview {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.size-preview .dot {
+  border-radius: 50%;
+  background: var(--paper-100);
+  transition: width 0.06s linear, height 0.06s linear;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px 4px;
+  overflow-x: auto;
+}
+
+.swatch {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  position: relative;
+}
+.swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(214,255,63,0.35);
+}
+.swatch.custom-swatch {
+  background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+}
+
+.color-picker-panel {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 100%;
+  margin-bottom: 10px;
+  background: rgba(18,21,19,0.96);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  backdrop-filter: blur(8px);
+}
+.color-picker-panel.hidden { display: none; }
+
+#sv-canvas, #hue-canvas {
+  display: block;
+  border-radius: 6px;
+  touch-action: none;
+  width: 100%;
+}
+#sv-canvas { height: 130px; margin-bottom: 10px; }
+#hue-canvas { height: 16px; }
+
+.advanced-toggle {
+  font-size: 12px;
+  color: var(--ink-500);
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  text-align: left;
+}
+.advanced-row.hidden { display: none; }
+
+.toolbar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 10px 14px calc(14px + var(--safe-bottom));
+  background: linear-gradient(to top, rgba(11,13,12,0.92), rgba(11,13,12,0.55) 70%, transparent);
+  z-index: 20;
+}
+
+.brush-test-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.brush-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--ink-700);
+  background: rgba(18,21,19,0.7);
+  color: var(--paper-100);
+  font-size: 12.5px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.brush-chip.active {
+  background: var(--accent);
+  color: var(--ink-950);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.hint-pill {
+  position: absolute;
+  top: calc(64px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18,21,19,0.85);
+  border: 1px solid var(--ink-700);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--paper-100);
+  z-index: 20;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
+.fps-badge {
+  position: absolute;
+  bottom: calc(10px + var(--safe-bottom));
+  right: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+  background: rgba(18,21,19,0.6);
+  padding: 3px 8px;
+  border-radius: 5px;
+  z-index: 20;
+}

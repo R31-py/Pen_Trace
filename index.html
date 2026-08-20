@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Pencil Tracer</title>
+<meta name="theme-color" content="#0b0d0c" />
+<meta name="description" content="Trace and draw on real paper, tracked live by your phone camera." />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ Workspace: camera + all canvas layers ============ -->
+  <div class="workspace">
+    <video id="camera-video" playsinline autoplay muted></video>
+    <!-- draw-canvas: virtual brush strokes (Phase 6+) -->
+    <canvas id="draw-canvas"></canvas>
+    <!-- reference-canvas: imported tracing image (Phase 9+) -->
+    <canvas id="reference-canvas"></canvas>
+    <!-- overlay-canvas: calibration targets, tip cursor, guides -->
+    <canvas id="overlay-canvas"></canvas>
+  </div>
+
+  <!-- ============ Top bar ============ -->
+  <div class="topbar">
+    <div class="title">
+      <span class="dot" id="tracking-dot"></span>
+      Pencil Tracer
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="icon-btn hidden" id="recalibrate-btn" aria-label="Recalibrate">🎯</button>
+      <button class="icon-btn" id="settings-btn" aria-label="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <div class="hint-pill hidden" id="hint-pill"></div>
+  <div class="fps-badge hidden" id="fps-badge">-- fps</div>
+
+  <!-- ============ Toolbar (populated in later phases) ============ -->
+  <div class="toolbar hidden" id="toolbar">
+    <!-- Minimal test row for Phase 7; replaced by the styled toolbar in Phase 27 -->
+    <div class="brush-test-row" id="brush-test-row"></div>
+
+    <!-- Phase 8: brush controls -->
+    <div class="color-picker-panel hidden" id="color-picker-panel">
+      <canvas id="sv-canvas" width="260" height="130"></canvas>
+      <canvas id="hue-canvas" width="260" height="16"></canvas>
+    </div>
+
+    <div class="control-row">
+      <span class="control-label">Size</span>
+      <input type="range" id="size-slider" min="0" max="100" value="35" />
+      <span class="size-preview"><span class="dot" id="size-preview-dot"></span></span>
+    </div>
+    <div class="control-row">
+      <span class="control-label">Opacity</span>
+      <input type="range" id="opacity-slider" min="10" max="100" value="88" />
+    </div>
+
+    <button class="advanced-toggle" id="advanced-toggle">Flow &amp; texture \u25be</button>
+    <div class="advanced-row hidden" id="advanced-row">
+      <div class="control-row">
+        <span class="control-label">Flow</span>
+        <input type="range" id="flow-slider" min="0" max="100" value="50" />
+      </div>
+      <div class="control-row">
+        <span class="control-label">Texture</span>
+        <input type="range" id="texture-slider" min="0" max="100" value="50" />
+      </div>
+    </div>
+
+    <div class="color-row" id="color-row"></div>
+
+    <button class="btn-secondary" id="clear-btn">Clear drawing</button>
+  </div>
+
+  <!-- ============ Center panel: permission / error / start states ============ -->
+  <div class="center-panel" id="center-panel">
+    <div class="pencil-mark">✏️ →  📷</div>
+    <h1 id="center-title">Mount your phone above the paper</h1>
+    <p id="center-body">
+      Pencil Tracer watches a physical pencil tip through your camera and
+      turns its movement into a virtual drawing. Your paper stays blank —
+      nothing needs to be drawn on it.
+    </p>
+    <button class="btn-primary" id="enable-camera-btn">Enable camera</button>
+  </div>
+
+</div>
+
+<script src="./js/camera.js"></script>
+<script src="./js/marker.js"></script>
+<script src="./js/homography.js"></script>
+<script src="./js/calibration.js"></script>
+<script src="./js/tracking.js"></script>
+<script src="./js/brushes.js"></script>
+<script src="./js/drawing.js"></script>
+<script src="./js/brush-controls.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
