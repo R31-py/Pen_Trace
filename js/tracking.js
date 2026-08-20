@@ -139,10 +139,16 @@
    *  so the marker can't sneak back in and resume the old stroke. */
   function holdLift(active) {
     state.held = !!active;
-    if (state.held && state.tracking) {
-      state.tracking = false;
-      state.confidence = 0;
-      emit('lost');
+    if (state.held) {
+      // wipe smoothing state so we don't ease/interpolate from the old
+      // (pre-lift) position toward wherever the pencil is on release \u2014
+      // that carry-over is what drew a spurious connecting line
+      state.smoothed = null;
+      if (state.tracking) {
+        state.tracking = false;
+        state.confidence = 0;
+        emit('lost');
+      }
     }
   }
 

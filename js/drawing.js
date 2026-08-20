@@ -95,6 +95,23 @@
     emit('cleared');
   }
 
+  /** A brush/color/size change mid-stroke should only affect what's drawn
+   *  from here onward, not retroactively repaint the whole in-progress
+   *  stroke (which is what happens if we just mutate state.current.brush,
+   *  since a stroke is rendered with one brush for all its points). So
+   *  instead we cap off the in-progress stroke exactly where the pencil
+   *  currently is \u2014 baked with whatever brush drew it \u2014 then start a
+   *  brand new stroke at that same point so the line stays visually
+   *  continuous while picking up the new brush from there on. */
+  function splitCurrentStrokeForBrushChange(newBrush) {
+    if (!state.current) return;
+    const pts = state.current.points;
+    const lastPt = pts[pts.length - 1];
+    finalizeStroke(); // bakes/pushes what's drawn so far with the OLD brush
+    state.brush = newBrush;
+    startStroke(lastPt); // picks up state.brush, now the new one
+  }
+
   // ---- projection helpers ----
   function projectNormalizedPoints(points, toDevicePixels) {
     const dpr = toDevicePixels ? window.PencilCamera.dpr : 1;
@@ -202,17 +219,16 @@
     clearAll,
     on,
     setBrush(partial) {
-      state.brush = { ...state.brush, ...partial };
-      // apply live to whatever stroke is currently being drawn, not just
-      // the next one \u2014 otherwise a mid-stroke brush/color/size change
-      // looks like it did nothing until you lift and start again
-      if (state.current) state.current.brush = { ...state.current.brush, ...partial };
+      const newBrush = { ...state.brush, ...partial };
+      splitCurrentStrokeForBrushChange(newBrush);
+      state.brush = newBrush;
     },
     setBrushType(type) {
       const preset = window.BrushEngine.PRESETS[type];
       if (!preset) return;
-      state.brush = { type, ...preset };
-      if (state.current) state.current.brush = { type, ...preset };
+      const newBrush = { type, ...preset };
+      splitCurrentStrokeForBrushChange(newBrush);
+      state.brush = newBrush;
     },
     rebakeAll,
     get brush() { return { ...state.brush }; },
