@@ -127,7 +127,7 @@
     state.tracking = false;
   }
 
-  window.App && window.App.on && window.App.on('tip', (tip) => handleTip(tip, performance.now()));
+  window.MarkerTracker && window.MarkerTracker.on && window.MarkerTracker.on('tip', (tip) => handleTip(tip, performance.now()));
 
   // ---- overlay rendering: live cursor + optional debug grid ----
   function render() {

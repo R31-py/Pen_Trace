@@ -250,6 +250,74 @@
     brushRow.appendChild(btn);
   });
 
+  // ---- reference image (Phase 9) ----
+  const referenceBtn = document.getElementById('reference-btn');
+  const referencePanel = document.getElementById('reference-panel');
+  const fileInput = document.getElementById('reference-file-input');
+  const lockBtn = document.getElementById('lock-reference-btn');
+  const thresholdSlider = document.getElementById('ref-threshold');
+  const thresholdToggle = document.getElementById('ref-threshold-toggle');
+
+  window.Calibration && window.Calibration.on('complete', () => {
+    referenceBtn.classList.remove('hidden');
+  });
+
+  referenceBtn.addEventListener('click', () => {
+    referencePanel.classList.toggle('hidden');
+  });
+
+  document.getElementById('import-reference-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    if (!fileInput.files[0]) return;
+    await window.Reference.loadFromFile(fileInput.files[0]);
+    window.Reference.unlock(); // start unlocked so the user can position it
+    lockBtn.textContent = '\ud83d\udd13';
+    fileInput.value = '';
+  });
+
+  document.getElementById('fit-reference-btn').addEventListener('click', () => {
+    window.Reference.fitToPaper();
+  });
+
+  lockBtn.addEventListener('click', () => {
+    if (window.Reference.locked) {
+      window.Reference.unlock();
+      lockBtn.textContent = '\ud83d\udd13';
+    } else {
+      window.Reference.lock();
+      lockBtn.textContent = '\ud83d\udd12';
+    }
+  });
+
+  document.getElementById('ref-opacity').addEventListener('input', (e) => {
+    window.Reference.setProcessing({ opacity: Number(e.target.value) / 100 });
+  });
+  document.getElementById('ref-brightness').addEventListener('input', (e) => {
+    window.Reference.setProcessing({ brightness: Number(e.target.value) / 100 });
+  });
+  document.getElementById('ref-contrast').addEventListener('input', (e) => {
+    window.Reference.setProcessing({ contrast: Number(e.target.value) / 100 });
+  });
+  document.getElementById('ref-blur').addEventListener('input', (e) => {
+    window.Reference.setProcessing({ blur: Number(e.target.value) });
+  });
+  document.getElementById('ref-grayscale').addEventListener('change', (e) => {
+    window.Reference.setProcessing({ grayscale: e.target.checked });
+  });
+  document.getElementById('ref-invert').addEventListener('change', (e) => {
+    window.Reference.setProcessing({ invert: e.target.checked });
+  });
+  document.getElementById('ref-edge').addEventListener('change', (e) => {
+    window.Reference.setProcessing({ edgeDetect: e.target.checked });
+  });
+  thresholdToggle.addEventListener('change', (e) => {
+    thresholdSlider.disabled = !e.target.checked;
+    window.Reference.setProcessing({ threshold: e.target.checked ? Number(thresholdSlider.value) : null });
+  });
+  thresholdSlider.addEventListener('input', (e) => {
+    if (thresholdToggle.checked) window.Reference.setProcessing({ threshold: Number(e.target.value) });
+  });
+
   // ---- service worker registration (fleshed out in Phase 13) ----
   if ('serviceWorker' in navigator && window.isSecureContext) {
     window.addEventListener('load', () => {

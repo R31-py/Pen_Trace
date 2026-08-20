@@ -18,10 +18,10 @@
   <!-- ============ Workspace: camera + all canvas layers ============ -->
   <div class="workspace">
     <video id="camera-video" playsinline autoplay muted></video>
+    <!-- reference-canvas: imported tracing image (Phase 9+), sits below ink -->
+    <canvas id="reference-canvas"></canvas>
     <!-- draw-canvas: virtual brush strokes (Phase 6+) -->
     <canvas id="draw-canvas"></canvas>
-    <!-- reference-canvas: imported tracing image (Phase 9+) -->
-    <canvas id="reference-canvas"></canvas>
     <!-- overlay-canvas: calibration targets, tip cursor, guides -->
     <canvas id="overlay-canvas"></canvas>
   </div>
@@ -33,6 +33,7 @@
       Pencil Tracer
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="icon-btn hidden" id="reference-btn" aria-label="Reference image">\uD83D\uDDBC\uFE0F</button>
       <button class="icon-btn hidden" id="recalibrate-btn" aria-label="Recalibrate">🎯</button>
       <button class="icon-btn" id="settings-btn" aria-label="Settings">⚙️</button>
     </div>
@@ -40,6 +41,43 @@
 
   <div class="hint-pill hidden" id="hint-pill"></div>
   <div class="fps-badge hidden" id="fps-badge">-- fps</div>
+
+  <input type="file" id="reference-file-input" accept="image/png,image/jpeg,image/webp" class="hidden" />
+
+  <!-- ============ Reference image panel (Phase 9) ============ -->
+  <div class="reference-panel hidden" id="reference-panel">
+    <div class="control-row">
+      <button class="btn-secondary" id="import-reference-btn">Import image</button>
+      <button class="btn-secondary" id="fit-reference-btn">Fit to paper</button>
+      <button class="icon-btn" id="lock-reference-btn" aria-label="Lock reference">🔓</button>
+    </div>
+    <div class="control-row">
+      <span class="control-label">Opacity</span>
+      <input type="range" id="ref-opacity" min="5" max="100" value="70" />
+    </div>
+    <div class="control-row">
+      <span class="control-label">Brightness</span>
+      <input type="range" id="ref-brightness" min="30" max="170" value="100" />
+    </div>
+    <div class="control-row">
+      <span class="control-label">Contrast</span>
+      <input type="range" id="ref-contrast" min="30" max="170" value="100" />
+    </div>
+    <div class="control-row">
+      <span class="control-label">Blur</span>
+      <input type="range" id="ref-blur" min="0" max="6" value="0" />
+    </div>
+    <div class="control-row">
+      <span class="control-label">Threshold</span>
+      <input type="range" id="ref-threshold" min="0" max="255" value="128" disabled />
+    </div>
+    <div class="toggle-row">
+      <label><input type="checkbox" id="ref-grayscale" /> Grayscale</label>
+      <label><input type="checkbox" id="ref-invert" /> Invert</label>
+      <label><input type="checkbox" id="ref-edge" /> Edge detect</label>
+      <label><input type="checkbox" id="ref-threshold-toggle" /> Threshold</label>
+    </div>
+  </div>
 
   <!-- ============ Toolbar (populated in later phases) ============ -->
   <div class="toolbar hidden" id="toolbar">
@@ -101,6 +139,8 @@
 <script src="./js/brushes.js"></script>
 <script src="./js/drawing.js"></script>
 <script src="./js/brush-controls.js"></script>
+<script src="./js/image-warp.js"></script>
+<script src="./js/reference.js"></script>
 <script src="./js/app.js"></script>
 </body>
 </html>
