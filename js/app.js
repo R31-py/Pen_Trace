@@ -380,12 +380,20 @@
   // ---- touch-to-lift: tapping the drawing area ends the current stroke ----
   // (the camera can't distinguish "touching paper" from "hovering above
   // it" on its own \u2014 see forceLift()'s comment in tracking.js)
-  document.querySelector('.workspace').addEventListener('pointerdown', (e) => {
+  const workspaceEl = document.querySelector('.workspace');
+  workspaceEl.addEventListener('pointerdown', (e) => {
     // don't treat reference-image positioning gestures (drag/pinch/rotate,
     // only active while unlocked) as a lift tap
     if (e.target && e.target.id === 'reference-canvas') return;
+    // stop this from being interpreted as the start of a long-press (which
+    // triggers the browser's native "copy/save video frame" menu on the
+    // camera <video> and eats the tap before it reaches us)
+    e.preventDefault();
     window.Tracking.forceLift();
   });
+  // belt-and-suspenders: some mobile browsers can still raise the video's
+  // native context menu even with preventDefault above, so block it outright
+  workspaceEl.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // ---- service worker registration (fleshed out in Phase 13) ----
   if ('serviceWorker' in navigator && window.isSecureContext) {

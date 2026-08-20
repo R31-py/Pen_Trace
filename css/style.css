@@ -73,6 +73,10 @@ html, body {
   transform: scaleX(1);
   opacity: 0.16; /* faint alignment reference \u2014 the paper itself is the star */
   transition: opacity 0.15s ease;
+  -webkit-touch-callout: none; /* stop Android/iOS long-press "save/copy video frame" menu */
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation; /* tap-to-lift, not a media gesture */
 }
 #camera-video.cam-full { opacity: 1; }
 #camera-video.cam-hidden { opacity: 0; }

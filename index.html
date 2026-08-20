@@ -17,7 +17,7 @@
 
   <!-- ============ Workspace: camera + all canvas layers ============ -->
   <div class="workspace">
-    <video id="camera-video" playsinline autoplay muted></video>
+    <video id="camera-video" playsinline autoplay muted disablePictureInPicture disableRemotePlayback controlsList="nodownload nofullscreen noremoteplayback" oncontextmenu="return false"></video>
     <!-- reference-canvas: imported tracing image (Phase 9+), sits below ink -->
     <canvas id="reference-canvas"></canvas>
     <!-- draw-canvas: virtual brush strokes (Phase 6+) -->
