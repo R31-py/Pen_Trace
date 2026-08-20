@@ -381,6 +381,11 @@
   // (the camera can't distinguish "touching paper" from "hovering above
   // it" on its own \u2014 see forceLift()'s comment in tracking.js)
   const workspaceEl = document.querySelector('.workspace');
+  // pointer ids currently pressed on the workspace (holding the lift) \u2014
+  // tracked as a set rather than a single flag so a stray second finger
+  // can't cause an early resume while the first is still down
+  const liftHoldIds = new Set();
+
   workspaceEl.addEventListener('pointerdown', (e) => {
     // don't treat reference-image positioning gestures (drag/pinch/rotate,
     // only active while unlocked) as a lift tap
@@ -389,8 +394,21 @@
     // triggers the browser's native "copy/save video frame" menu on the
     // camera <video> and eats the tap before it reaches us)
     e.preventDefault();
-    window.Tracking.forceLift();
+    liftHoldIds.add(e.pointerId);
+    window.Tracking.holdLift(true);
   });
+
+  // release the lift only once every held pointer is gone \u2014 listen on
+  // window (not the workspace) so a finger dragged off the workspace before
+  // lifting still gets caught
+  const releaseLiftHold = (e) => {
+    if (!liftHoldIds.has(e.pointerId)) return;
+    liftHoldIds.delete(e.pointerId);
+    if (liftHoldIds.size === 0) window.Tracking.holdLift(false);
+  };
+  window.addEventListener('pointerup', releaseLiftHold);
+  window.addEventListener('pointercancel', releaseLiftHold);
+
   // belt-and-suspenders: some mobile browsers can still raise the video's
   // native context menu even with preventDefault above, so block it outright
   workspaceEl.addEventListener('contextmenu', (e) => e.preventDefault());

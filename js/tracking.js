@@ -39,6 +39,9 @@
     lastGoodTime: 0,
     lastTs: 0,
     smoothed: null,        // internal EMA state, normalized space
+    held: false,           // finger is currently pressed on the screen: suppress
+                            // all tracking/reacquisition until it's released
+                            // (see holdLift() below)
   };
 
   const listeners = {};
@@ -73,6 +76,7 @@
   function handleTip(tip, ts) {
     if (!state.enabled) return;
     if (!window.Calibration || !window.Calibration.isCalibrated) return;
+    if (state.held) return; // finger is down on the screen \u2014 stay lifted
 
     const now = ts || performance.now();
     const dt = state.lastTs ? now - state.lastTs : 16;
@@ -128,16 +132,18 @@
   }
 
   /** Manual pen-lift: the camera can't tell "touching paper" from "hovering
-   *  above it" on its own, so we treat a tap on the drawing area as an
-   *  explicit lift signal. If the marker is still visible in the same
-   *  spot next frame, tracking simply reacquires and a fresh stroke
-   *  begins there \u2014 which is exactly the desired behavior when someone
-   *  taps mid-drawing to end one stroke and start the next. */
-  function forceLift() {
-    if (!state.tracking) return;
-    state.tracking = false;
-    state.confidence = 0;
-    emit('lost');
+   *  above it" on its own, so a finger held on the screen is used as an
+   *  explicit lift signal for as long as it's held. Reacquisition (and a
+   *  fresh stroke) only happens once the finger is lifted off the *screen*
+   *  \u2014 while held, handleTip() bails out early (see state.held above)
+   *  so the marker can't sneak back in and resume the old stroke. */
+  function holdLift(active) {
+    state.held = !!active;
+    if (state.held && state.tracking) {
+      state.tracking = false;
+      state.confidence = 0;
+      emit('lost');
+    }
   }
 
   window.MarkerTracker && window.MarkerTracker.on && window.MarkerTracker.on('tip', (tip) => handleTip(tip, performance.now()));
@@ -202,7 +208,7 @@
   window.Tracking = {
     enable,
     disable,
-    forceLift,
+    holdLift,
     on,
     get point() { return state.normalized; },
     get isTracking() { return state.tracking; },
